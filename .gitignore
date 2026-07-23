@@ -3,3 +3,5 @@ dist
 .sites-build
 .DS_Store
 *.log
+tmp/
+output/
