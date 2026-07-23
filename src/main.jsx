@@ -286,13 +286,13 @@ function Loader({ onDone }) {
   useEffect(() => {
     const started = performance.now();
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const duration = reduced ? 250 : 1100;
+    const duration = reduced ? 120 : 520;
     let frame;
     const tick = (now) => {
       const value = Math.min(100, Math.round(((now - started) / duration) * 100));
       setProgress(value);
       if (value < 100) frame = requestAnimationFrame(tick);
-      else window.setTimeout(onDone, reduced ? 0 : 260);
+      else window.setTimeout(onDone, reduced ? 0 : 100);
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
@@ -340,6 +340,53 @@ function TiltFrame({ children, className = "" }) {
       onPointerLeave={reset}
     >
       {children}
+    </div>
+  );
+}
+
+function DeferredVideo({
+  src,
+  ariaLabel,
+  controls = false,
+  autoPlayWhenVisible = true,
+  aspectRatio,
+}) {
+  const containerRef = useRef(null);
+  const [shouldLoad, setShouldLoad] = useState(false);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return undefined;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setShouldLoad(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "500px 0px" },
+    );
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={containerRef}
+      className={`deferred-video ${controls ? "deferred-video--library" : ""}`}
+      style={aspectRatio ? { aspectRatio } : undefined}
+    >
+      <video
+        src={shouldLoad ? src : undefined}
+        muted
+        loop={autoPlayWhenVisible}
+        playsInline
+        controls={controls}
+        autoPlay={autoPlayWhenVisible && shouldLoad}
+        preload="none"
+        aria-label={ariaLabel}
+      />
     </div>
   );
 }
@@ -452,13 +499,9 @@ function ProjectSection({ project, onOpen }) {
           }
           aria-label={`播放 ${project.title} 动态视频`}
         >
-          <video
+          <DeferredVideo
             src={media(project.video)}
-            muted
-            loop
-            playsInline
-            autoPlay
-            preload="metadata"
+            ariaLabel={`${project.title} 动态视频`}
           />
           <span className="media-button__hint">PLAY MOTION / 01</span>
         </button>
@@ -577,13 +620,12 @@ function WorkLibrary({ onOpen }) {
                 <article className="library-item" key={`${item.id}-${item.src}`}>
                   {item.kind === "video" ? (
                     <div className="library-item__visual library-item__visual--video">
-                      <video
-                        controls
-                        muted
-                        playsInline
-                        preload="metadata"
+                      <DeferredVideo
                         src={item.src}
-                        aria-label={item.title}
+                        ariaLabel={item.title}
+                        controls
+                        autoPlayWhenVisible={false}
+                        aspectRatio={item.ratio}
                       />
                       <button
                         type="button"
@@ -705,15 +747,20 @@ function App() {
           </h1>
           <div className="hero__works" aria-hidden="true">
             <div className="hero-card hero-card--one">
-              <img src={media("onlystar-14.webp")} alt="" />
+              <img
+                src={media("onlystar-14.webp")}
+                alt=""
+                fetchPriority="high"
+                decoding="async"
+              />
               <span>03 / AIGC WORLD</span>
             </div>
             <div className="hero-card hero-card--two">
-              <img src={media("taotao-06.webp")} alt="" />
+              <img src={media("taotao-hero.webp")} alt="" decoding="async" />
               <span>04 / BRAND IDENTITY</span>
             </div>
             <div className="hero-card hero-card--three">
-              <img src={media("fansai-hero.webp")} alt="" />
+              <img src={media("fansai-hero.webp")} alt="" decoding="async" />
               <span>01 / DIGITAL EXPERIENCE</span>
             </div>
           </div>
@@ -752,7 +799,12 @@ function App() {
               </h2>
             </div>
             <div className="profile-photo">
-              <img src={media("profile.webp")} alt="李金维证件照" />
+              <img
+                loading="lazy"
+                decoding="async"
+                src={media("profile.webp")}
+                alt="李金维证件照"
+              />
             </div>
             <div className="profile-text">
               <p className="profile-intro">
