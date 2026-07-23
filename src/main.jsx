@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import "./styles.css";
+import { workLibrary } from "./workLibrary";
 
 const media = (name) => `./media/${name}`;
+const asset = (name) => (name.startsWith("./library/") ? name : media(name));
 
 const skills = [
   "AIGC 概念视觉",
@@ -190,21 +192,6 @@ const projects = [
   },
 ];
 
-const archive = [
-  ["果味角色实验", "fruit-peach.webp", "CHARACTER"],
-  ["缤纷水果蛋糕店", "fruit-strawberry.webp", "GAME IP"],
-  ["赛博都市镜头", "ldrobots-01.webp", "SCI-FI"],
-  ["蓝色智能生命", "ldrobots-03.webp", "CONCEPT"],
-  ["远星殖民地", "ldrobots-04.webp", "WORLD"],
-  ["雨夜机械对决", "transformers-04.webp", "SEQUENCE"],
-  ["城市战争", "transformers-03.webp", "SEQUENCE"],
-  ["荒漠变形镜头", "transformers-02.webp", "SEQUENCE"],
-  ["哥特庄园叙事", "wuthering-01.webp", "CINEMA"],
-  ["呼啸山庄", "wuthering-03.webp", "CINEMA"],
-  ["小钱包装与导视", "xiaoqian-03.webp", "WAYFINDING"],
-  ["小钱空间应用", "xiaoqian-05.webp", "PACKAGING"],
-];
-
 function SignalCanvas() {
   const ref = useRef(null);
 
@@ -377,9 +364,9 @@ function MediaModal({ item, onClose }) {
         CLOSE ×
       </button>
       {item.kind === "video" ? (
-        <video controls autoPlay playsInline src={media(item.src)} />
+        <video controls autoPlay playsInline src={asset(item.src)} />
       ) : (
-        <img src={media(item.src)} alt={item.alt} />
+        <img src={asset(item.src)} alt={item.alt} />
       )}
     </div>
   );
@@ -407,6 +394,25 @@ function ProjectSection({ project, onOpen }) {
         <img loading="lazy" src={media(project.hero)} alt={project.title} />
         <span className="media-button__hint">OPEN FULLSCREEN ↗</span>
       </button>
+
+      {project.live && (
+        <div className="project__web-access" aria-label={`${project.title} 网页入口`}>
+          <div>
+            <span>LIVE WEB EXPERIENCE / 完整项目网页</span>
+            <p>{project.live.replace(/^https?:\/\//, "")}</p>
+          </div>
+          <div className="project__web-actions">
+            <a className="project__web-live" href={project.live} target="_blank" rel="noreferrer">
+              OPEN LIVE SITE <Arrow />
+            </a>
+            {project.code && (
+              <a href={project.code} target="_blank" rel="noreferrer">
+                VIEW SOURCE <Arrow />
+              </a>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="project__story">
         <p className="project__lead">{project.summary}</p>
@@ -482,17 +488,152 @@ function ProjectSection({ project, onOpen }) {
   );
 }
 
+const libraryFilters = [
+  ["ALL", "全部"],
+  ["AIGC", "AIGC"],
+  ["BRAND", "品牌"],
+  ["3D", "三维"],
+  ["PHOTOGRAPHY", "摄影"],
+  ["POSTER", "海报"],
+  ["MOTION", "动态"],
+];
+
+function WorkLibrary({ onOpen }) {
+  const [active, setActive] = useState("ALL");
+
+  const counts = useMemo(
+    () =>
+      workLibrary.reduce(
+        (result, item) => {
+          result.ALL += 1;
+          result[item.category] = (result[item.category] || 0) + 1;
+          return result;
+        },
+        { ALL: 0 },
+      ),
+    [],
+  );
+
+  const grouped = useMemo(() => {
+    const selected =
+      active === "ALL" ? workLibrary : workLibrary.filter((item) => item.category === active);
+
+    return Array.from(
+      selected.reduce((groups, item) => {
+        const key = `${item.parentCategory}__${item.series}`;
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(item);
+        return groups;
+      }, new Map()),
+    );
+  }, [active]);
+
+  return (
+    <section id="archive" className="archive-section">
+      <div className="section-label section-label--light">
+        <span>001—249</span>
+        <span>COMPLETE WORK LIBRARY / 全部作品分类库</span>
+      </div>
+      <div className="archive-head">
+        <h2>
+          THE FULL
+          <br />
+          VISUAL INDEX.
+        </h2>
+        <div>
+          <p>
+            239 张作品图像与 10 段动态影像，按媒介和系列完整归档。所有作品保持原始比例，
+            仅在全屏查看时进行细节放大。
+          </p>
+          <strong>{String(workLibrary.length).padStart(3, "0")} WORKS / 作品总数</strong>
+        </div>
+      </div>
+      <div className="archive-filters" role="group" aria-label="筛选全部作品">
+        {libraryFilters.map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            className={active === value ? "is-active" : ""}
+            onClick={() => setActive(value)}
+            aria-pressed={active === value}
+          >
+            {label} <span>{String(counts[value] || 0).padStart(2, "0")}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="library-groups">
+        {grouped.map(([key, items], groupIndex) => (
+          <section className="library-series" key={key}>
+            <header className="library-series__head">
+              <span>{String(groupIndex + 1).padStart(2, "0")}</span>
+              <h3>{items[0].series}</h3>
+              <p>
+                {items[0].parentCategory} / {String(items.length).padStart(2, "0")} WORKS
+              </p>
+            </header>
+            <div className="library-grid">
+              {items.map((item, index) => (
+                <article className="library-item" key={`${item.id}-${item.src}`}>
+                  {item.kind === "video" ? (
+                    <div className="library-item__visual library-item__visual--video">
+                      <video
+                        controls
+                        muted
+                        playsInline
+                        preload="metadata"
+                        src={item.src}
+                        aria-label={item.title}
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onOpen({ src: item.src, alt: item.title, kind: item.kind })
+                        }
+                      >
+                        FULLSCREEN ↗
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      className="library-item__visual"
+                      onClick={() =>
+                        onOpen({ src: item.src, alt: item.title, kind: item.kind })
+                      }
+                      aria-label={`全屏查看 ${item.title}`}
+                    >
+                      <img
+                        loading="lazy"
+                        decoding="async"
+                        src={item.src}
+                        alt={item.title}
+                        width={item.width}
+                        height={item.height}
+                      />
+                      <span>DETAIL VIEW ↗</span>
+                    </button>
+                  )}
+                  <div className="library-item__meta">
+                    <i>{String(index + 1).padStart(2, "0")}</i>
+                    <b>{item.title}</b>
+                    <em>{item.category}</em>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function App() {
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
-  const [filter, setFilter] = useState("ALL");
   const [menuOpen, setMenuOpen] = useState(false);
   const progressRef = useRef(null);
-
-  const filteredArchive = useMemo(() => {
-    if (filter === "ALL") return archive;
-    return archive.filter(([, , type]) => type === filter);
-  }, [filter]);
 
   useEffect(() => {
     const reveal = new IntersectionObserver(
@@ -518,8 +659,6 @@ function App() {
     };
   }, [loading]);
 
-  const filters = ["ALL", "CHARACTER", "SCI-FI", "CONCEPT", "SEQUENCE", "CINEMA", "PACKAGING"];
-
   return (
     <>
       {loading && <Loader onDone={() => setLoading(false)} />}
@@ -536,7 +675,7 @@ function App() {
             PROFILE
           </a>
           <a href="#archive" onClick={() => setMenuOpen(false)}>
-            ARCHIVE
+            LIBRARY
           </a>
           <a href="#contact" onClick={() => setMenuOpen(false)}>
             CONTACT
@@ -662,47 +801,7 @@ function App() {
           <ProjectSection key={project.id} project={project} onOpen={setModal} />
         ))}
 
-        <section id="archive" className="archive-section reveal">
-          <div className="section-label section-label--light">
-            <span>A—Z</span>
-            <span>VISUAL ARCHIVE / 视觉档案</span>
-          </div>
-          <div className="archive-head">
-            <h2>MORE WORLDS<br />IN PROGRESS.</h2>
-            <p>
-              这里保留角色、电影序列、包装与世界观练习。点击任意图像可进入全屏观看。
-            </p>
-          </div>
-          <div className="archive-filters" role="group" aria-label="筛选视觉档案">
-            {filters.map((item) => (
-              <button
-                key={item}
-                type="button"
-                className={filter === item ? "is-active" : ""}
-                onClick={() => setFilter(item)}
-              >
-                {item}
-              </button>
-            ))}
-          </div>
-          <div className="archive-grid">
-            {filteredArchive.map(([title, image, type], index) => (
-              <button
-                type="button"
-                className="archive-item"
-                key={`${title}-${image}`}
-                onClick={() => setModal({ src: image, alt: title, kind: "image" })}
-              >
-                <img src={media(image)} alt={title} />
-                <span className="archive-item__meta">
-                  <i>{String(index + 1).padStart(2, "0")}</i>
-                  <b>{title}</b>
-                  <em>{type}</em>
-                </span>
-              </button>
-            ))}
-          </div>
-        </section>
+        <WorkLibrary onOpen={setModal} />
 
         <section id="contact" className="contact-section">
           <SignalCanvas />
