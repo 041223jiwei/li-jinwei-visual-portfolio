@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 
 export default defineConfig({
   plugins: [react()],
+  // Relative asset URLs keep the build portable across GitHub Pages and Sites.
   base: "./",
   build: {
     target: "es2020",
