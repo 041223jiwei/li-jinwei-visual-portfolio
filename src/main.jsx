@@ -267,7 +267,11 @@ function SignalCanvas() {
         }
 
         context.beginPath();
-        context.arc(x, y, point.radius + Math.sin(time * 0.002 + point.seed), 0, Math.PI * 2);
+        const animatedRadius = Math.max(
+          0.35,
+          point.radius + Math.sin(time * 0.002 + point.seed),
+        );
+        context.arc(x, y, animatedRadius, 0, Math.PI * 2);
         context.fillStyle = `rgba(204, 255, 54, ${alpha})`;
         context.fill();
       });
