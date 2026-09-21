@@ -284,7 +284,7 @@ function App() {
             <div className="gallery-heading"><h2>把生活保存成<br /><em>三块漂浮的星尘。</em></h2><p>每一张照片都是一个坐标，记录我经过的人、事与现场。</p></div>
             <div className="memory-field">
               <div className="memory-orbit memory-orbit--one" aria-hidden="true" /><div className="memory-orbit memory-orbit--two" aria-hidden="true" />
-              <figure className="memory-card memory-card--one"><div className="memory-card__frame"><img src="./space/memory-01.jpg" alt="徐宇星的活动现场照片" /></div><figcaption><span>MEMORY / 01</span><strong>第一次进入轨道</strong></figcaption></figure>
+              <figure className="memory-card memory-card--one"><div className="memory-card__frame"><img src="./space/memory-01.jpg" alt="徐宇星第一次来到湖南大学参加新生开学典礼" /></div><figcaption><span>MEMORY / 01</span><strong>第一次来到湖南大学</strong></figcaption></figure>
               <figure className="memory-card memory-card--two"><div className="memory-card__frame"><img src="./space/memory-02.jpg" alt="徐宇星参与活动的照片" /></div><figcaption><span>MEMORY / 02</span><strong>与同伴一起发光</strong></figcaption></figure>
               <figure className="memory-card memory-card--three"><div className="memory-card__frame"><img src="./space/memory-03.jpg" alt="徐宇星在活动现场的照片" /></div><figcaption><span>MEMORY / 03</span><strong>一段共同完成的旅程</strong></figcaption></figure>
             </div>
